@@ -1,0 +1,102 @@
+services:
+
+##########################################
+##
+## wordpress / networking
+##
+##########################################
+
+    emby-proxy:
+
+        container_name: emby-proxy
+
+        image: nginxproxy/nginx-proxy:1.6
+
+        restart: unless-stopped
+
+        ports:
+
+            - 80:80
+
+            - 443:443
+
+        volumes:
+
+            - /var/run/docker.sock:/tmp/docker.sock:ro
+
+            - /var/docker/nginx/html:/usr/share/nginx/html
+
+            - /var/docker/nginx/certs:/etc/nginx/certs
+
+            - /var/docker/nginx/vhost:/etc/nginx/vhost.d
+
+        logging:
+
+            options:
+
+                max-size: "10m"
+
+                max-file: "3"
+
+    emby-letsencrypt:
+
+        container_name: emby-letsencrypt
+
+        image: jrcs/letsencrypt-nginx-proxy-companion
+
+        restart: unless-stopped
+
+        volumes_from:
+
+            - emby-proxy
+
+        volumes:
+
+            - /var/run/docker.sock:/var/run/docker.sock
+
+            - /var/docker/nginx/acme:/etc/acme.sh
+
+        environment:
+
+            DEFAULT_EMAIL: the.software.shinobi@gmail.com
+
+##########################################
+##
+## wordpress / relational data
+##
+##########################################
+
+    emby-server:
+
+        container_name: emby-server
+
+        image: emby/embyserver
+
+        hostname: emby
+
+        restart: unless-stopped
+
+        volumes:
+
+            - /media:/media
+
+            - /media/.emby/:/config
+
+        ports:
+
+            - 8096:8096
+
+        expose:
+
+            - 8096
+
+        environment:
+
+            VIRTUAL_PORT: 8096
+
+            VIRTUAL_HOST: radio.embanet.online
+
+            LETSENCRYPT_HOST: radio.embanet.online
+
+
+
